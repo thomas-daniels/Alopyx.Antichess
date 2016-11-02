@@ -38,10 +38,22 @@ namespace Alopyx.Antichess
             // The forced win depth can be increased at the cost of more computation time. For now it's hardcoded to be 1
             // until I implement some better time management that allows Alopyx to make better use of the time it receives.
             if (forcedWin != null) return forcedWin;
-            var validWithAtLeastOneOption = valid.Where(x => x.AllowsXOptions > 0).OrderBy(x => x.Score)
+            LookForTraps();
+            var validWithAtLeastOneOption = valid.Where(x => x.AllowsXOptions > 0 && !x.Trap).OrderBy(x => x.Score)
                 .ThenByDescending(x => x.AllowsXOptions)
                 .ThenBy(x => x.AllowsXOptions);
-            if (!validWithAtLeastOneOption.Any()) { return null; }
+            if (!validWithAtLeastOneOption.Any())
+            {
+                var validTrapsButWithMoreThanOneOption = valid.Where(x => x.Trap && x.AllowsXOptions > 0);
+                if (validTrapsButWithMoreThanOneOption.Any())
+                {
+                    return validTrapsButWithMoreThanOneOption.First().Move;
+                }
+                else
+                {
+                    return null;
+                }
+            }
             return validWithAtLeastOneOption.First().Move;
         }
 
@@ -88,15 +100,36 @@ namespace Alopyx.Antichess
             {
                 AntichessGame copy = new AntichessGame(game.GetFen());
                 copy.ApplyMove(move, true);
+
                 DetailedMove detailed = copy.Moves[copy.Moves.Count - 1];
                 ReadOnlyCollection<Move> validOptions = copy.GetValidMoves(copy.WhoseTurn);
                 int optionsCount = validOptions.Count;
+
                 string[] newFenParts = copy.GetFen().Split(' ');
                 newFenParts[1] = newFenParts[1] == "w" ? "b" : "w";
                 newFenParts[3] = "-";
                 AntichessGame copy2 = new AntichessGame(string.Join(" ", newFenParts));
                 int mobilityScore = copy2.GetValidMoves(copy2.WhoseTurn).Count;
-                valid.Add(new MoveWithMetadata(move, detailed, validOptions, optionsCount, mobilityScore));
+
+                bool trap = false;
+                valid.Add(new MoveWithMetadata(move, detailed, validOptions, optionsCount, mobilityScore, trap));
+            }
+        }
+
+        void LookForTraps()
+        {
+            foreach (MoveWithMetadata move in valid)
+            {
+                AntichessGame copy = new AntichessGame(game.GetFen());
+                copy.ApplyMove(move.Move, true);
+                Engine engineCopy = new Engine(copy);
+                engineCopy.ProcessValidMoves();
+                bool trap = engineCopy.FindForcedWin(1) != null;
+                if (trap)
+                {
+                    System.Console.WriteLine("I found a trap. I should not do {0}-{1}!", move.Move.OriginalPosition, move.Move.NewPosition);
+                }
+                move.Trap = trap;
             }
         }
     }

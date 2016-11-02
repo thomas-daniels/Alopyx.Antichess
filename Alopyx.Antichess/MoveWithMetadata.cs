@@ -10,6 +10,7 @@ namespace Alopyx.Antichess
         public ReadOnlyCollection<Move> Options { get; set; }
         public int AllowsXOptions { get; set; }
         public int MobilityScore { get; set; }
+        public bool Trap { get; set; }
         public double Score
         {
             get
@@ -18,13 +19,14 @@ namespace Alopyx.Antichess
             }
         }
 
-        public MoveWithMetadata(Move move, DetailedMove detailed, ReadOnlyCollection<Move> options, int optionsAllowed, int mobilityScore)
+        public MoveWithMetadata(Move move, DetailedMove detailed, ReadOnlyCollection<Move> options, int optionsAllowed, int mobilityScore, bool trap)
         {
             Move = move;
             Detailed = detailed;
             Options = options;
             AllowsXOptions = optionsAllowed;
             MobilityScore = mobilityScore;
+            Trap = trap;
         }
     }
 }
