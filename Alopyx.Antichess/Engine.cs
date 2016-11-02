@@ -125,10 +125,6 @@ namespace Alopyx.Antichess
                 Engine engineCopy = new Engine(copy);
                 engineCopy.ProcessValidMoves();
                 bool trap = engineCopy.FindForcedWin(1) != null;
-                if (trap)
-                {
-                    System.Console.WriteLine("I found a trap. I should not do {0}-{1}!", move.Move.OriginalPosition, move.Move.NewPosition);
-                }
                 move.Trap = trap;
             }
         }
