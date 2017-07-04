@@ -4,15 +4,17 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{3FCC7463-441F-4631-BA28-3467A117DC55}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{32584133-4C70-484A-8D3F-DDBDE459978B}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Alopyx.Antichess</RootNamespace>
-    <AssemblyName>Alopyx.Antichess</AssemblyName>
+    <RootNamespace>Alopyx.Antichess.Training</RootNamespace>
+    <AssemblyName>Alopyx.Antichess.Training</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -22,6 +24,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -31,10 +34,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="ChessDotNet">
-      <HintPath>..\..\ChessDotNet\ChessDotNet\bin\Release\ChessDotNet.dll</HintPath>
+      <HintPath>..\Alopyx.Antichess\bin\Release\ChessDotNet.dll</HintPath>
     </Reference>
     <Reference Include="ChessDotNet.Variants">
-      <HintPath>..\..\ChessDotNet\ChessDotNet.Variants\bin\Release\ChessDotNet.Variants.dll</HintPath>
+      <HintPath>..\Alopyx.Antichess\bin\Release\ChessDotNet.Variants.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -46,13 +49,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Engine.cs" />
-    <Compile Include="MoveWithMetadata.cs" />
-    <Compile Include="Neural\AntichessNetwork.cs" />
-    <Compile Include="Neural\Layer.cs" />
-    <Compile Include="Neural\Matrix.cs" />
-    <Compile Include="Neural\Network.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Alopyx.Antichess\Alopyx.Antichess.csproj">
+      <Project>{3fcc7463-441f-4631-ba28-3467a117dc55}</Project>
+      <Name>Alopyx.Antichess</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

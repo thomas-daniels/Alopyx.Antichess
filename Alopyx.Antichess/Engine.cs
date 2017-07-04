@@ -1,4 +1,5 @@
-﻿using ChessDotNet;
+﻿using Alopyx.Antichess.Neural;
+using ChessDotNet;
 using ChessDotNet.Variants.Antichess;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,22 +10,22 @@ namespace Alopyx.Antichess
     public class Engine
     {
         AntichessGame game;
+        AntichessNetwork net;
         public AntichessGame Game { get { return game; } }
         List<MoveWithMetadata> valid = new List<MoveWithMetadata>();
 
-        public Engine()
+        public Engine(string netMatrixPath)
         {
             game = new AntichessGame();
+
+            Matrix init = Matrix.Load(netMatrixPath);
+            net = new AntichessNetwork(init);
         }
 
-        public Engine(string fen)
-        {
-            game = new AntichessGame(fen);
-        }
-
-        public Engine(AntichessGame game)
+        public Engine(AntichessGame game, AntichessNetwork net)
         {
             this.game = game;
+            this.net = net;
         }
 
         public Move FindBestMove()
@@ -37,24 +38,14 @@ namespace Alopyx.Antichess
             Move forcedWin = FindForcedWin(1);
             // The forced win depth can be increased at the cost of more computation time. For now it's hardcoded to be 1
             // until I implement some better time management that allows Alopyx to make better use of the time it receives.
-            if (forcedWin != null) return forcedWin;
+
             LookForTraps();
-            var validWithAtLeastOneOption = valid.Where(x => x.AllowsXOptions > 0 && !x.Trap).OrderBy(x => x.Score)
-                .ThenByDescending(x => x.AllowsXOptions)
-                .ThenBy(x => x.AllowsXOptions);
-            if (!validWithAtLeastOneOption.Any())
-            {
-                var validTrapsButWithMoreThanOneOption = valid.Where(x => x.Trap && x.AllowsXOptions > 0);
-                if (validTrapsButWithMoreThanOneOption.Any())
-                {
-                    return validTrapsButWithMoreThanOneOption.First().Move;
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            return validWithAtLeastOneOption.First().Move;
+
+            IEnumerable<Move> avoid = valid.Where(x => x.Trap).Select(x => x.Move);
+
+            if (forcedWin != null) return forcedWin;
+
+            return net.Query(game, game.WhoseTurn, avoid);
         }
 
         Move FindForcedWin(int depth)
@@ -76,7 +67,7 @@ namespace Alopyx.Antichess
                     {
                         continue;
                     }
-                    Engine engineCopy = new Engine(gameCopy);
+                    Engine engineCopy = new Engine(gameCopy, net);
                     engineCopy.ProcessValidMoves();
                     if (engineCopy.FindForcedWin(depth) == null)
                     {
@@ -122,7 +113,7 @@ namespace Alopyx.Antichess
             {
                 AntichessGame copy = new AntichessGame(game.GetFen());
                 copy.ApplyMove(move.Move, true);
-                Engine engineCopy = new Engine(copy);
+                Engine engineCopy = new Engine(copy, net);
                 engineCopy.ProcessValidMoves();
                 bool trap = engineCopy.FindForcedWin(1) != null;
                 move.Trap = trap;
