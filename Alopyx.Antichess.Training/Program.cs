@@ -10,18 +10,25 @@ namespace Alopyx.Antichess.Training
     {
         static void Main(string[] args)
         {
-            if (args[0] == "fics")
-            {
-                TrainFICSPgn(args[1], args[2]);
-            }
+            TrainPgn(args[0], args[1]);
         }
 
-        static void TrainFICSPgn(string path, string matrixOutputPath)
+        static void TrainPgn(string path, string matrixOutputPath)
         {
             StreamReader sr = new StreamReader(path);
             string line;
 
-            AntichessNetwork net = new AntichessNetwork();
+            AntichessNetwork net;
+
+            if (System.IO.File.Exists(matrixOutputPath))
+            {
+                Matrix init = Matrix.Load(matrixOutputPath);
+                net = new AntichessNetwork(init);
+            }
+            else
+            {
+                net = new AntichessNetwork();
+            }
 
             bool skipThisGame = false;
             string result = null;
@@ -64,7 +71,7 @@ namespace Alopyx.Antichess.Training
                     }
                     else if (line.StartsWith("[Variant"))
                     {
-                        if (!line.Contains("suicide")) skipThisGame = true;
+                        if (!line.Contains("suicide") && !line.Contains("Antichess")) skipThisGame = true;
                     }
                 }
             }
