@@ -34,7 +34,7 @@ namespace Alopyx.Antichess
             {
                 return valid[0].Move;
             }
-            Move forcedWin = FindForcedWin(1);
+            Move forcedWin = FindForcedWin(2);
             // The forced win depth can be increased at the cost of more computation time. For now it's hardcoded to be 1
             // until I implement some better time management that allows Alopyx to make better use of the time it receives.
             if (forcedWin != null) return forcedWin;
@@ -51,7 +51,14 @@ namespace Alopyx.Antichess
                 }
                 else
                 {
-                    return null;
+                    if (valid.Count > 0)
+                    {
+                        return valid[0].Move;
+                    }
+                    else
+                    {
+                        return null;
+                    }
                 }
             }
             return validWithAtLeastOneOption.First().Move;
