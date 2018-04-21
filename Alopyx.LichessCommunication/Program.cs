@@ -126,6 +126,7 @@ namespace Alopyx.LichessCommunication
                                     }
                                 }
                             }
+                            Console.WriteLine($"[game {game}] response and stream disposed");
                         }).Start();
                     }
                     else
