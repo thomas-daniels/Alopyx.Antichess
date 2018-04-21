@@ -48,11 +48,11 @@ namespace Alopyx.LichessCommunication
                         string id = challenge.Value<string>("id");
                         if (!rated && variant == "antichess" && tc == "clock")
                         {
-                            SendRequest("/challenge/" + id + "/accept", "POST", authenticationToken);
+                            SendRequest("/challenge/" + id + "/accept", "POST", authenticationToken).Dispose();
                         }
                         else
                         {
-                            SendRequest("/challenge/" + id + "/decline", "POST", authenticationToken);
+                            SendRequest("/challenge/" + id + "/decline", "POST", authenticationToken).Dispose();
                         }
                     }
                     else if (type == "gameStart")
