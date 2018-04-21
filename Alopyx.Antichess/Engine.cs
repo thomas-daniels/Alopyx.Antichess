@@ -29,7 +29,10 @@ namespace Alopyx.Antichess
 
         public Move FindBestMove()
         {
-            ProcessValidMoves();
+            if (ProcessValidMoves() == 0)
+            {
+                return null;
+            }
             if (valid.Count == 1)
             {
                 return valid[0].Move;
@@ -99,7 +102,7 @@ namespace Alopyx.Antichess
             return null;
         }
 
-        void ProcessValidMoves()
+        int ProcessValidMoves()
         {
             valid.Clear();
             ReadOnlyCollection<Move> validMoves = game.GetValidMoves(game.WhoseTurn);
@@ -121,6 +124,7 @@ namespace Alopyx.Antichess
                 bool trap = false;
                 valid.Add(new MoveWithMetadata(move, detailed, validOptions, optionsCount, mobilityScore, trap));
             }
+            return validMoves.Count;
         }
 
         void LookForTraps()
