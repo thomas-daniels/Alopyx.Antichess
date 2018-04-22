@@ -48,11 +48,11 @@ namespace Alopyx.LichessCommunication
                         string id = challenge.Value<string>("id");
                         if (!rated && variant == "antichess" && tc == "clock")
                         {
-                            SendRequest("/challenge/" + id + "/accept", "POST", authenticationToken).Dispose();
+                            SendRequest("/challenge/" + id + "/accept", "POST", authenticationToken)?.Dispose();
                         }
                         else
                         {
-                            SendRequest("/challenge/" + id + "/decline", "POST", authenticationToken).Dispose();
+                            SendRequest("/challenge/" + id + "/decline", "POST", authenticationToken)?.Dispose();
                         }
                     }
                     else if (type == "gameStart")
@@ -62,66 +62,71 @@ namespace Alopyx.LichessCommunication
                         {
                             Engine engine = new Engine();
                             using (HttpWebResponse gameResp = SendRequest("/bot/game/stream/" + game, "GET", authenticationToken))
-                            using (Stream gameStream = gameResp.GetResponseStream())
                             {
-                                using (StreamReader gameReader = new StreamReader(gameStream))
+                                if (gameResp == null) return;
+                                using (Stream gameStream = gameResp.GetResponseStream())
                                 {
-                                    string gameEventStr;
-
-                                    bool isWhite = false;
-                                    bool first = true;
-                                    while ((gameEventStr = gameReader.ReadLine()) != null)
+                                    using (StreamReader gameReader = new StreamReader(gameStream))
                                     {
-                                        if (string.IsNullOrWhiteSpace(gameEventStr)) continue;
+                                        string gameEventStr;
 
-                                        Console.WriteLine($"[game {game}] {gameEventStr}");
-                                        JObject gameEvent = JsonConvert.DeserializeObject<JObject>(gameEventStr);
-
-                                        int moveCount = -1;
-
-                                        if (gameEvent.ContainsKey("id"))
+                                        bool isWhite = false;
+                                        bool first = true;
+                                        while ((gameEventStr = gameReader.ReadLine()) != null)
                                         {
-                                            isWhite = gameEvent.GetValue("white").Value<string>("id") != null && gameEvent.GetValue("white").Value<string>("id").ToLowerInvariant() == username.ToLowerInvariant();
-                                            Console.WriteLine($"[game {game}] isWhite {isWhite}");
+                                            if (string.IsNullOrWhiteSpace(gameEventStr)) continue;
 
-                                            gameEvent = (JObject)gameEvent.GetValue("state");
-                                        }
-                                        if (gameEvent.ContainsKey("moves"))
-                                        {
+                                            Console.WriteLine($"[game {game}] {gameEventStr}");
+                                            JObject gameEvent = JsonConvert.DeserializeObject<JObject>(gameEventStr);
 
-                                            string[] moves = gameEvent.GetValue("moves").ToObject<string>().Split(' ');
-                                            if (first && moves[0] != "")
+                                            int moveCount = -1;
+
+                                            if (gameEvent.ContainsKey("id"))
                                             {
-                                                foreach (string move in moves)
-                                                {
-                                                    Move m = new Move(move.Substring(0, 2), move.Substring(2, 2), engine.Game.WhoseTurn, move.Length == 4 ? (char?)null : move.Last());
-                                                    engine.Game.ApplyMove(m, true);
-                                                }
-                                            }
+                                                isWhite = gameEvent.GetValue("white").Value<string>("id") != null && gameEvent.GetValue("white").Value<string>("id").ToLowerInvariant() == username.ToLowerInvariant();
+                                                Console.WriteLine($"[game {game}] isWhite {isWhite}");
 
-                                            if (moves.Length > moveCount && ((moves[0] == "" && isWhite) || (moves[0] != "" && moves.Length % 2 == (isWhite ? 0 : 1))))
+                                                gameEvent = (JObject)gameEvent.GetValue("state");
+                                            }
+                                            if (gameEvent.ContainsKey("moves"))
                                             {
-                                                moveCount = moves.Length;
 
-                                                string lastMove = moves.Last();
-                                                if (moves[0] != "" && !first)
+                                                string[] moves = gameEvent.GetValue("moves").ToObject<string>().Split(' ');
+                                                if (first && moves[0] != "")
                                                 {
-                                                    Move m = new Move(lastMove.Substring(0, 2), lastMove.Substring(2, 2), isWhite ? Player.Black : Player.White, lastMove.Length == 4 ? (char?)null : lastMove.Last());
-                                                    engine.Game.ApplyMove(m, true);
+                                                    foreach (string move in moves)
+                                                    {
+                                                        Move m = new Move(move.Substring(0, 2), move.Substring(2, 2), engine.Game.WhoseTurn, move.Length == 4 ? (char?)null : move.Last());
+                                                        engine.Game.ApplyMove(m, true);
+                                                    }
                                                 }
-                                                Move best = engine.FindBestMove();
-                                                if (best == null) break;
-                                                engine.Game.ApplyMove(best, true);
 
-                                                string moveToSend = best.OriginalPosition.ToString().ToLowerInvariant() +
-                                                    best.NewPosition.ToString().ToLowerInvariant() +
-                                                    (!best.Promotion.HasValue ? "" : best.Promotion.Value.ToString().ToLowerInvariant());
-                                                Console.WriteLine($"[game {game}] sending move {moveToSend}");
-                                                SendRequest("/bot/game/" + game + "/move/" + moveToSend, "POST", authenticationToken).Dispose();
-                                                Console.WriteLine($"[game {game}] move sent");
+                                                if (moves.Length > moveCount && ((moves[0] == "" && isWhite) || (moves[0] != "" && moves.Length % 2 == (isWhite ? 0 : 1))))
+                                                {
+                                                    moveCount = moves.Length;
+
+                                                    string lastMove = moves.Last();
+                                                    if (moves[0] != "" && !first)
+                                                    {
+                                                        Move m = new Move(lastMove.Substring(0, 2), lastMove.Substring(2, 2), isWhite ? Player.Black : Player.White, lastMove.Length == 4 ? (char?)null : lastMove.Last());
+                                                        engine.Game.ApplyMove(m, true);
+                                                    }
+                                                    Move best = engine.FindBestMove();
+                                                    if (best == null) break;
+                                                    engine.Game.ApplyMove(best, true);
+
+                                                    string moveToSend = best.OriginalPosition.ToString().ToLowerInvariant() +
+                                                        best.NewPosition.ToString().ToLowerInvariant() +
+                                                        (!best.Promotion.HasValue ? "" : best.Promotion.Value.ToString().ToLowerInvariant());
+                                                    Console.WriteLine($"[game {game}] sending move {moveToSend}");
+                                                    HttpWebResponse r = SendRequest("/bot/game/" + game + "/move/" + moveToSend, "POST", authenticationToken);
+                                                    if (r != null) { r.Dispose(); }
+                                                    else { break; } // Happens if Alopyx times out because it had to think for too long, then sends the move to the server when it found it and the game is already over.
+                                                    Console.WriteLine($"[game {game}] move sent");
+                                                }
+
+                                                first = false;
                                             }
-
-                                            first = false;
                                         }
                                     }
                                 }
@@ -142,7 +147,15 @@ namespace Alopyx.LichessCommunication
             HttpWebRequest hwr = WebRequest.CreateHttp(new Uri(new Uri("https://lichess.org/"), url));
             hwr.Headers[HttpRequestHeader.Authorization] = "Bearer " + authorization;
             hwr.Method = method;
-            return (HttpWebResponse)hwr.GetResponse();
+            try
+            {
+                return (HttpWebResponse)hwr.GetResponse();
+            }
+            catch (WebException e)
+            {
+                Console.WriteLine("WebException caught: " + e.Message);
+                return null;
+            }
         }
     }
 }
