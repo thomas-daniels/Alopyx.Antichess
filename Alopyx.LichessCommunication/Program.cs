@@ -16,9 +16,6 @@ namespace Alopyx.LichessCommunication
     {
         static void Main()
         {
-            Engine eng = new Engine("4k3/5P2/8/8/3N4/8/8/8 w - - 1 36");
-            var movee = eng.FindBestMove();
-
             ServicePointManager.DefaultConnectionLimit = 20; // TODO: cleaner way to avoid requests getting throttled
             Console.WriteLine("Username: ");
             string username = Console.ReadLine();
