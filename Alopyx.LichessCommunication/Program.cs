@@ -1,4 +1,4 @@
-﻿using Alopyx.Antichess;
+using Alopyx.Antichess;
 using ChessDotNet;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -22,7 +22,7 @@ namespace Alopyx.LichessCommunication
             Console.WriteLine("Authentication token: ");
             string authenticationToken = Console.ReadLine();
             Console.Clear();
-
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             using (HttpWebResponse resp = SendRequest("/api/stream/event", "GET", authenticationToken))
             using (Stream stream = resp.GetResponseStream())
             using (StreamReader reader = new StreamReader(stream))
@@ -45,11 +45,11 @@ namespace Alopyx.LichessCommunication
                         string id = challenge.Value<string>("id");
                         if (!rated && variant == "antichess" && tc == "clock")
                         {
-                            SendRequest("/challenge/" + id + "/accept", "POST", authenticationToken)?.Dispose();
+                            SendRequest("/api/challenge/" + id + "/accept", "POST", authenticationToken)?.Dispose();
                         }
                         else
                         {
-                            SendRequest("/challenge/" + id + "/decline", "POST", authenticationToken)?.Dispose();
+                            SendRequest("/api/challenge/" + id + "/decline", "POST", authenticationToken)?.Dispose();
                         }
                     }
                     else if (type == "gameStart")
@@ -58,7 +58,7 @@ namespace Alopyx.LichessCommunication
                         new Thread(() =>
                         {
                             Engine engine = new Engine();
-                            using (HttpWebResponse gameResp = SendRequest("/bot/game/stream/" + game, "GET", authenticationToken))
+                            using (HttpWebResponse gameResp = SendRequest("/api/bot/game/stream/" + game, "GET", authenticationToken))
                             {
                                 if (gameResp == null) return;
                                 using (Stream gameStream = gameResp.GetResponseStream())
@@ -116,7 +116,7 @@ namespace Alopyx.LichessCommunication
                                                         best.NewPosition.ToString().ToLowerInvariant() +
                                                         (!best.Promotion.HasValue ? "" : best.Promotion.Value.ToString().ToLowerInvariant());
                                                     Console.WriteLine($"[game {game}] sending move {moveToSend}");
-                                                    HttpWebResponse r = SendRequest("/bot/game/" + game + "/move/" + moveToSend, "POST", authenticationToken);
+                                                    HttpWebResponse r = SendRequest("/api/bot/game/" + game + "/move/" + moveToSend, "POST", authenticationToken);
                                                     if (r != null) { r.Dispose(); }
                                                     else { break; } // Happens if Alopyx times out because it had to think for too long, then sends the move to the server when it found it and the game is already over.
                                                     Console.WriteLine($"[game {game}] move sent");
